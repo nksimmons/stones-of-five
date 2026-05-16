@@ -1,3 +1,5 @@
+![Stones of Five](stones-of-five-wide.png)
+
 # Stones of Five
 
 A browser-based multiplayer implementation of the classic five-in-a-row game with captures, playable on local Wi-Fi or via GitHub Pages using WebRTC (no server required).
