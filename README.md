@@ -1,4 +1,4 @@
-![Stones of Five](stones-of-five-minimal.png)
+<img src="stones-of-five-minimal.png" width="250" alt="Stones of Five">
 
 # Stones of Five
 
