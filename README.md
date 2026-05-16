@@ -1,4 +1,4 @@
-![Stones of Five](stones-of-five-wide.png)
+![Stones of Five](stones-of-five-minimal.png)
 
 # Stones of Five
 
