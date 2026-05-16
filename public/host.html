@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stones of Five — Host Screen</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* Host-specific layout */
+    .host-layout { display: flex; gap: 1rem; align-items: flex-start; }
+    .host-sidebar { width: 220px; flex-shrink: 0; display: flex; flex-direction: column; gap: 0.75rem; }
+    .host-board-area { flex: 1; display: flex; align-items: center; justify-content: center; }
+    #game-board, #final-board { width: 100%; max-width: 600px; height: auto; aspect-ratio: 1; display: block; cursor: default; }
+    .player-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; border-radius: 8px; background: var(--bg-surface); }
+    .player-row .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; overflow: hidden; }
+    .player-row .player-name { font-weight: 600; font-size: 0.95rem; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .player-row .capture-count { font-size: 0.8rem; color: var(--text-dim); }
+    .qr-section { text-align: center; }
+    .qr-section img { max-width: 160px; border-radius: 8px; border: 3px solid var(--bg-surface); }
+    .join-url { font-size: 0.65rem; word-break: break-all; color: var(--text-dim); margin-top: 0.25rem; }
+    .lobby-grid { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; }
+    .lobby-player-card { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; padding: 0.75rem; border-radius: 10px; background: var(--bg-surface); min-width: 100px; }
+    .lobby-player-card .avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--accent); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+    .lobby-player-card .player-name { font-weight: 600; text-align: center; font-size: 0.9rem; }
+    .captures-bar { display: flex; flex-direction: column; gap: 0.4rem; }
+    .turn-marker { font-size: 0.8rem; color: var(--success); font-weight: 700; }
+    .host-status { font-size: 0.85rem; color: var(--text-dim); }
+    @media (max-width: 640px) {
+      .host-layout { flex-direction: column; }
+      .host-sidebar { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Lobby ── -->
+<div id="screen-lobby" class="screen active">
+  <div class="container" style="max-width:900px">
+    <h1 style="margin-bottom:1.5rem">🪨 Stones of Five — Waiting for Players</h1>
+    <div class="host-layout">
+      <div class="host-sidebar">
+        <div class="card qr-section">
+          <h3 style="margin:0 0 0.5rem">Scan to Join</h3>
+          <img id="qr-img" style="display:none" alt="QR Code">
+          <div id="room-id" class="join-url">Connecting…</div>
+          <div id="lobby-url" class="join-url" style="margin-top:0.25rem"></div>
+        </div>
+        <div class="card">
+          <h3 style="margin:0 0 0.75rem">Bot Controls</h3>
+          <div style="display:flex;flex-direction:column;gap:0.5rem">
+            <button class="btn" id="host-btn-add-bot">➕ Add Bot</button>
+            <button class="btn" id="host-btn-remove-bot" style="display:none">➖ Remove Bot</button>
+            <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap">
+              <label for="host-bot-level" style="font-size:0.85rem;color:var(--text-dim)">Level</label>
+              <select id="host-bot-level" class="input" style="flex:1">
+                <option value="1">1 – Easy</option>
+                <option value="2" selected>2 – Medium</option>
+                <option value="3">3 – Hard</option>
+                <option value="4">4 – Expert</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="flex:1">
+        <div class="card">
+          <h3 style="margin:0 0 0.75rem">Players (<span id="lobby-player-count">0</span>/4)</h3>
+          <div id="lobby-player-list" class="lobby-grid"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Playing ── -->
+<div id="screen-playing" class="screen">
+  <div class="container" style="max-width:900px">
+    <div class="host-layout">
+      <div class="host-sidebar">
+        <div class="card" style="padding:0.75rem">
+          <div id="host-turn-indicator" class="turn-indicator waiting" style="justify-content:flex-start;margin-bottom:0.5rem">–</div>
+          <div class="captures-bar" id="host-captures-bar"></div>
+        </div>
+        <div class="card" style="padding:0.75rem">
+          <div id="host-player-list" style="display:flex;flex-direction:column;gap:0.4rem"></div>
+        </div>
+      </div>
+      <div class="host-board-area">
+        <canvas id="game-board"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Game Over ── -->
+<div id="screen-gameOver" class="screen">
+  <div class="container" style="max-width:900px">
+    <div class="card" style="text-align:center;margin-bottom:1.5rem">
+      <div id="winner-info"></div>
+    </div>
+    <div style="text-align:center;margin-bottom:1.5rem">
+      <button class="btn btn-success" id="host-btn-restart" style="min-width:180px">🔄 Play Again</button>
+    </div>
+    <canvas id="final-board" style="width:100%;max-width:420px;height:auto;aspect-ratio:1;display:block;margin:0 auto"></canvas>
+  </div>
+</div>
+
+<!-- ── Fixed host controls bar ── -->
+<div id="host-controls-bar" class="host-controls-bar" style="display:none">
+  <button class="btn" id="btn-end-game" style="background:var(--danger);color:white">⛔ End</button>
+  <div style="display:flex;align-items:center;gap:0.5rem">
+    <label style="font-size:0.75rem;color:var(--text-dim)">Kick</label>
+    <select id="kick-select" class="input" style="font-size:0.8rem;padding:0.25rem 0.4rem"><option value="">–</option></select>
+    <button class="btn" id="btn-kick" style="padding:0.35rem 0.75rem">Kick</button>
+  </div>
+</div>
+
+<div id="toasts" class="toast-container"></div>
+
+  <script src="js/trystero-peer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script src="/server-info.js" onerror="void 0"></script>
+<script src="js/local-peer.js"></script>
+<script src="js/game.js"></script>
+<script src="js/board.js"></script>
+<script src="js/host.js"></script>
+</body>
+</html>

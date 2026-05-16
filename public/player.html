@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stones of Five — Join as Player</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ── No room error ── -->
+<div id="screen-no-room" class="screen">
+  <div class="container">
+    <div class="card" style="text-align:center;padding:2rem">
+      <h2>❌ No Room Found</h2>
+      <p style="color:var(--text-dim)">Scan the QR code from a host screen, or ask the host for the join link.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── Join (avatar builder) ── -->
+<div id="screen-join" class="screen active">
+  <div class="container">
+    <h1 style="margin-bottom:1rem">🪨 Join Stones of Five</h1>
+    <div class="card">
+      <h3 style="margin:0 0 1rem">Create Your Avatar</h3>
+      <div style="display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:0.5rem">
+          <canvas id="draw-canvas" style="width:140px;height:140px;border-radius:50%;border:2px solid var(--tile-border);cursor:crosshair;touch-action:none"></canvas>
+          <div id="draw-colors" style="display:flex;flex-wrap:wrap;gap:4px;max-width:140px"></div>
+          <div style="display:flex;gap:0.5rem">
+            <button class="btn" id="btn-undo" style="padding:0.3rem 0.75rem;font-size:0.8rem">↩ Undo</button>
+            <button class="btn" id="btn-clear" style="padding:0.3rem 0.75rem;font-size:0.8rem">🗑 Clear</button>
+          </div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:0.75rem;min-width:180px">
+          <div>
+            <label style="font-size:0.85rem;color:var(--text-dim);display:block;margin-bottom:0.25rem">Background Color</label>
+            <div id="color-options" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+          </div>
+          <div>
+            <label style="font-size:0.85rem;color:var(--text-dim);display:block;margin-bottom:0.25rem">Preview</label>
+            <div id="avatar-preview" style="width:60px;height:60px;border-radius:50%;border:2px solid var(--tile-border);background:var(--bg-surface);background-size:cover"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:1rem">
+      <label for="player-name" style="font-size:0.85rem;color:var(--text-dim);display:block;margin-bottom:0.4rem">Your Name</label>
+      <div style="display:flex;gap:0.75rem">
+        <input id="player-name" class="input" type="text" placeholder="Enter your name" maxlength="20" style="flex:1">
+        <button class="btn btn-success" id="btn-join" style="min-width:90px">Join →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Lobby ── -->
+<div id="screen-lobby" class="screen">
+  <div class="container">
+    <h2 style="margin-bottom:1rem">🪨 Stones of Five — Lobby</h2>
+    <p id="lobby-waiting-msg" style="color:var(--text-dim)">Waiting for the host to start the game…</p>
+
+    <!-- Bot controls (host only) -->
+    <div id="player-bot-controls" class="card" style="display:none;margin-bottom:1rem">
+      <h3 style="margin:0 0 0.75rem">Bot Controls</h3>
+      <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center">
+        <button class="btn" id="player-btn-add-bot" style="display:none">➕ Add Bot</button>
+        <button class="btn" id="player-btn-remove-bot" style="display:none">➖ Remove Bot</button>
+        <div style="display:flex;align-items:center;gap:0.5rem">
+          <label style="font-size:0.85rem;color:var(--text-dim)">Level</label>
+          <select id="player-bot-level" class="input" style="width:auto">
+            <option value="1">1 – Easy</option>
+            <option value="2" selected>2 – Medium</option>
+            <option value="3">3 – Hard</option>
+            <option value="4">4 – Expert</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-success" id="btn-start-game" style="display:none;width:100%;margin-bottom:1rem">▶ Start Game</button>
+
+    <div class="card">
+      <h3 style="margin:0 0 0.75rem">Players</h3>
+      <div id="lobby-player-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Playing ── -->
+<div id="screen-playing" class="screen">
+  <div class="container" style="max-width:520px;padding-bottom:120px">
+    <div id="turn-indicator" class="turn-indicator waiting" style="margin-bottom:0.5rem">Waiting…</div>
+    <div style="position:relative;width:100%;margin-bottom:0.5rem">
+      <canvas id="game-board" style="width:100%;aspect-ratio:1;display:block;touch-action:none;cursor:pointer"></canvas>
+    </div>
+    <div id="captures-bar" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.5rem"></div>
+
+    <!-- Stone tray -->
+    <div id="stone-tray">
+      <div id="stone-pile" style="position:relative;height:50px;width:150px"></div>
+      <button class="btn btn-success" id="btn-confirm" disabled style="min-width:90px">Place ✓</button>
+      <button class="btn" id="btn-undo-move" disabled style="opacity:0.3">↩ Undo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Game Over ── -->
+<div id="screen-gameOver" class="screen">
+  <div class="container" style="max-width:520px">
+    <div class="card" style="text-align:center;margin-bottom:1rem">
+      <div id="winner-info"></div>
+    </div>
+
+    <!-- Host-only game over controls -->
+    <div id="gameover-host-controls" style="display:none;text-align:center;margin-bottom:1rem">
+      <button class="btn btn-success" id="btn-play-again" style="min-width:180px">🔄 Play Again</button>
+    </div>
+    <p id="gameover-waiting-msg" style="text-align:center;color:var(--text-dim)">Waiting for host to restart…</p>
+
+    <canvas id="final-board" style="width:100%;max-width:380px;height:auto;aspect-ratio:1;display:block;margin:0 auto"></canvas>
+  </div>
+</div>
+
+<!-- Drag floater (follows finger during drag) -->
+<div id="drag-floater" class="drag-floater" style="display:none;position:fixed;width:60px;height:60px;border-radius:50%;pointer-events:none;z-index:9999"></div>
+
+<div id="toasts" class="toast-container"></div>
+
+  <script src="js/trystero-peer.js"></script>
+<script src="js/local-peer.js"></script>
+<script src="js/game.js"></script>
+<script src="js/board.js"></script>
+<script src="js/player.js"></script>
+</body>
+</html>
