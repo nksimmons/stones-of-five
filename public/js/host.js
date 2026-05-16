@@ -69,7 +69,7 @@ function initHost() {
 }
 
 function _initTrysteroHost() {
-  const joinUrlEl = document.getElementById('join-url');
+  const joinUrlEl = document.getElementById('room-id');
   if (joinUrlEl) joinUrlEl.textContent = 'Connecting…';
 
   peer = new TrysteroHostPeer('nksimmons-stones-of-five');
@@ -87,7 +87,7 @@ function _initTrysteroHost() {
 }
 
 function _initLanHost() {
-  const joinUrlEl = document.getElementById('join-url');
+  const joinUrlEl = document.getElementById('room-id');
   if (joinUrlEl) joinUrlEl.textContent = 'Starting…';
   peer = new LocalHostPeer();
   peer.on('open', id => {
