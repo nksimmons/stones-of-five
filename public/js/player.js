@@ -162,6 +162,7 @@ function updateAvatarPreview() {
 
 // ── PeerJS connection ─────────────────────────────────────────────────
 let sendQueue = [];
+let pendingJoin = null;
 function send(msg) {
   if (conn && conn.open) conn.send(msg);
   else sendQueue.push(msg);
@@ -178,7 +179,10 @@ function connect() {
     peer = new LocalPlayerPeer();
     peer.on('open', () => {
       conn = peer.connect(roomId, { reliable: true });
-      conn.on('open', () => { send({ type: 'reconnect', deviceId }); flushQueue(); });
+      conn.on('open', () => {
+        if (pendingJoin) { const j = pendingJoin; pendingJoin = null; conn.send(j); }
+        else { send({ type: 'reconnect', deviceId }); flushQueue(); }
+      });
       conn.on('data', handleServerMsg);
       conn.on('close', () => { if (!kicked) setTimeout(connect, 2000); });
       conn.on('error', () => { if (!kicked) setTimeout(connect, 2000); });
@@ -191,8 +195,8 @@ function connect() {
   peer.on('open', () => {
     conn = peer.connect(roomId);
     conn.on('open', () => {
-      send({ type: 'reconnect', deviceId });
-      flushQueue();
+      if (pendingJoin) { const j = pendingJoin; pendingJoin = null; conn.send(j); }
+      else { send({ type: 'reconnect', deviceId }); flushQueue(); }
     });
     conn.on('data', handleServerMsg);
     conn.on('close', () => { if (!kicked) setTimeout(connect, 2000); });
@@ -204,9 +208,14 @@ function connect() {
 function handleServerMsg(msg) {
   switch (msg.type) {
     case 'joined':
-      playerId = msg.playerId; state = msg.data; render(); break;
+      playerId = msg.playerId; state = msg.data;
+      { const btn = document.getElementById('btn-join');
+        if (btn) { btn.textContent = 'Join Game'; btn.disabled = false; } }
+      render(); break;
     case 'reconnected':
-      playerId = msg.playerId; state = msg.data; render(); break;
+      playerId = msg.playerId; state = msg.data;
+      pendingJoin = null; // discard any stale queued join
+      render(); break;
     case 'unknown-device':
       render(); break;
     case 'state': {
@@ -461,10 +470,18 @@ document.getElementById('btn-join').addEventListener('click', () => {
   if (btn.disabled) return;
   const name = document.getElementById('player-name').value.trim();
   if (!name) { document.getElementById('player-name').focus(); return; }
-  btn.disabled = true;
   saveProfile(name, avatarChoice);
-  send({ type: 'player-join', name, avatar: avatarChoice, deviceId });
-  setTimeout(() => { btn.disabled = false; }, 3000);
+  const joinMsg = { type: 'player-join', name, avatar: avatarChoice, deviceId };
+  if (conn && conn.open) {
+    conn.send(joinMsg);
+    btn.disabled = true;
+    setTimeout(() => { btn.disabled = false; }, 3000);
+  } else {
+    // Connection still opening (common on Safari) — queue it
+    pendingJoin = joinMsg;
+    btn.textContent = 'Connecting…';
+    btn.disabled = true;
+  }
 });
 document.getElementById('player-name').addEventListener('keydown', (e) => { if (e.key === 'Enter') document.getElementById('btn-join').click(); });
 document.getElementById('btn-start-game').addEventListener('click', () => send({ type: 'start-game' }));
