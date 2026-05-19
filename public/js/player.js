@@ -8,6 +8,7 @@
 
 const BG_COLORS = ['#e63946','#457b9d','#2a9d8f','#e9c46a','#f4a261','#264653','#6a4c93','#1982c4','#8ac926','#ff595e','#ff924c','#c77dff'];
 const DRAW_COLORS = ['#111111','#ff4444','#ff8800','#ffdd00','#44cc44','#2299ff','#aa44ff','#ff66cc','#88ccff','#888888','#ffffff'];
+const DRAW_CANVAS_CSS_SIZE = 140; // matches inline style width/height in player.html
 
 const PILE_POSITIONS = [
   { x: 8,  y: 14, rot: -15 },
@@ -76,8 +77,8 @@ function initAvatarBuilder() {
   drawCanvas = document.getElementById('draw-canvas');
   drawCtx = drawCanvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
-  const rect = drawCanvas.getBoundingClientRect();
-  drawCanvas.width = rect.width * dpr; drawCanvas.height = rect.height * dpr;
+  drawCanvas.width = DRAW_CANVAS_CSS_SIZE * dpr;
+  drawCanvas.height = DRAW_CANVAS_CSS_SIZE * dpr;
   drawCtx.scale(dpr, dpr);
 
   const colorsEl = document.getElementById('draw-colors');
@@ -110,7 +111,7 @@ function initAvatarBuilder() {
 
   if (avatarChoice.drawing) {
     const img = new Image();
-    img.onload = () => { drawCtx.drawImage(img, 0, 0, drawCanvas.getBoundingClientRect().width, drawCanvas.getBoundingClientRect().height); drawStrokes = [{ restored: true }]; updateAvatarPreview(); };
+    img.onload = () => { drawCtx.drawImage(img, 0, 0, DRAW_CANVAS_CSS_SIZE, DRAW_CANVAS_CSS_SIZE); drawStrokes = [{ restored: true }]; updateAvatarPreview(); };
     img.src = avatarChoice.drawing;
   } else { redrawCanvas(); }
   updateAvatarPreview();
@@ -133,9 +134,8 @@ function onDrawEnd(e) {
   currentStroke = null; updateAvatarPreview();
 }
 function redrawCanvas() {
-  const rect = drawCanvas.getBoundingClientRect();
-  drawCtx.clearRect(0, 0, rect.width, rect.height);
-  drawCtx.fillStyle = avatarChoice.bgColor || BG_COLORS[0]; drawCtx.fillRect(0, 0, rect.width, rect.height);
+  drawCtx.clearRect(0, 0, DRAW_CANVAS_CSS_SIZE, DRAW_CANVAS_CSS_SIZE);
+  drawCtx.fillStyle = avatarChoice.bgColor || BG_COLORS[0]; drawCtx.fillRect(0, 0, DRAW_CANVAS_CSS_SIZE, DRAW_CANVAS_CSS_SIZE);
   for (const stroke of drawStrokes) {
     if (stroke.restored) continue;
     const pts = stroke.points;
